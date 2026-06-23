@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro de Campo</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Segoe UI',Roboto,Arial,sans-serif;background:#f5f5f5;color:#202124;font-size:14px;padding-bottom:70px}
+
+/* HEADER */
+.header{background:#fff;padding:12px 16px;border-bottom:1px solid #dadce0;position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px}
+.header img{height:48px;width:auto;object-fit:contain}
+.header-text h1{font-size:17px;font-weight:500;color:#202124}
+.header-text p{font-size:11px;color:#5f6368;margin-top:2px}
+
+/* SCREENS */
+.screen{display:none;padding:16px}
+.screen.active{display:block}
+
+/* FORM CARD */
+.card{background:#fff;border-radius:8px;padding:16px;border:1px solid #dadce0;margin-bottom:12px}
+.card-title{font-size:15px;font-weight:500;color:#202124;margin-bottom:4px;padding-bottom:10px;border-bottom:2px solid #1a73e8}
+.card-sub{font-size:11px;color:#5f6368;margin-bottom:14px}
+
+/* FIELDS */
+.field{margin-bottom:16px}
+.label{display:block;font-size:12px;font-weight:500;color:#202124;margin-bottom:5px}
+.label .req{color:#d93025}
+.label .memo{color:#137333;font-size:10px;font-weight:400;margin-left:6px}
+.field input,.field select,.field textarea{
+  width:100%;padding:9px 0;font-size:14px;border:none;border-bottom:1px solid #dadce0;
+  background:transparent;color:#202124;outline:none;font-family:inherit
+}
+.field input:focus,.field select:focus{border-bottom-color:#1a73e8;border-bottom-width:2px}
+.field textarea{resize:vertical;min-height:36px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.hint{font-size:11px;color:#5f6368;margin-top:3px;font-style:italic}
+.hint.ok{color:#137333;font-weight:500;font-style:normal}
+
+/* MEMO BAR */
+.memo-bar{background:#e6f4ea;border:1px solid #137333;border-radius:6px;padding:8px 12px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#137333;flex-wrap:wrap;gap:6px}
+.memo-bar button{background:#137333;color:#fff;border:none;padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer}
+
+/* TABS */
+.tabs{display:flex;gap:6px;margin-bottom:14px}
+.tab{flex:1;padding:9px;border:1px solid #dadce0;background:#fff;color:#5f6368;font-size:12px;font-weight:500;border-radius:4px;cursor:pointer;text-align:center}
+.tab.active{background:#e8f0fe;color:#1a73e8;border-color:#1a73e8}
+
+/* DIAG BUTTONS */
+.diag-group{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px}
+.diag-btn{padding:11px 6px;border:1px solid #dadce0;background:#fff;color:#202124;font-size:12px;font-weight:500;border-radius:4px;cursor:pointer;text-align:center}
+.diag-btn.on-v{background:#fce8e6;color:#c5221f;border-color:#c5221f}
+.diag-btn.on-p{background:#e6f4ea;color:#137333;border-color:#137333}
+.diag-btn.on-r{background:#fef7e0;color:#b06000;border-color:#b06000}
+
+/* CALC BOX */
+.calc-box{background:#f8f9fa;border-left:3px solid #1a73e8;padding:10px;border-radius:4px;margin-top:10px;font-size:12px;line-height:1.6}
+.calc-box b{color:#1a73e8}
+
+/* SAVE BUTTON */
+.btn-save{width:100%;padding:11px;background:#1a73e8;color:#fff;border:none;border-radius:4px;font-size:13px;font-weight:500;cursor:pointer;margin-top:6px}
+.btn-save:active{background:#1557b0}
+
+/* TOAST */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#323232;color:#fff;padding:10px 20px;border-radius:4px;font-size:12px;z-index:100;display:none}
+.toast.show{display:block}
+
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #dadce0;display:flex;justify-content:space-around;padding:8px 0;z-index:20;box-shadow:0 -1px 3px rgba(0,0,0,0.05)}
+.nav-btn{flex:1;padding:9px 4px;background:none;border:none;color:#5f6368;font-size:12px;font-weight:500;cursor:pointer;border-radius:4px;margin:0 3px}
+.nav-btn.active{color:#1a73e8;background:#e8f0fe}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}
+.stat-card{background:#fff;border:1px solid #dadce0;border-radius:6px;padding:8px;text-align:center}
+.stat-card .num{font-size:20px;font-weight:600}
+.stat-card .lbl{font-size:9px;color:#5f6368;text-transform:uppercase;margin-top:2px}
+.sc-t{border-left:3px solid #5f6368}.sc-t .num{color:#5f6368}
+.sc-p{border-left:3px solid #137333}.sc-p .num{color:#137333}
+.sc-v{border-left:3px solid #c5221f}.sc-v .num{color:#c5221f}
+.sc-r{border-left:3px solid #b06000}.sc-r .num{color:#b06000}
+.sc-i{border-left:3px solid #1a73e8}.sc-i .num{color:#1a73e8}
+.sc-%{border-left:3px solid #137333;background:#e6f4ea}.sc-% .num{color:#137333}
+
+/* ACTIONS */
+.actions{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.btn-act{padding:8px 10px;background:#fff;border:1px solid #dadce0;color:#202124;border-radius:4px;font-size:11px;font-weight:500;cursor:pointer;flex:1;min-width:90px}
+.btn-act.pri{background:#1a73e8;color:#fff;border-color:#1a73e8}
+.btn-act.dan{color:#c5221f;border-color:#c5221f}
+
+/* TABLE */
+.table-wrap{background:#fff;border:1px solid #dadce0;border-radius:8px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.dt{width:100%;border-collapse:collapse;min-width:800px;font-size:11px}
+table.dt th{background:#f8f9fa;color:#5f6368;font-weight:500;text-transform:uppercase;font-size:9px;padding:8px 6px;text-align:left;border-bottom:2px solid #dadce0;white-space:nowrap}
+table.dt td{padding:8px 6px;border-bottom:1px solid #f1f3f4;white-space:nowrap}
+table.dt tr:hover td{background:#f8f9fa}
+.badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:500}
+.bp{background:#e6f4ea;color:#137333}
+.bv{background:#fce8e6;color:#c5221f}
+.br{background:#fef7e0;color:#b06000}
+.bi{background:#e8f0fe;color:#1a73e8}
+.btn-del{padding:3px 7px;font-size:9px;border:1px solid #f28b82;background:#fff;color:#c5221f;border-radius:3px;cursor:pointer}
+.empty{text-align:center;padding:30px;color:#5f6368;font-size:12px}
+
+/* FILTERS */
+.filters{background:#fff;border:1px solid #dadce0;border-radius:8px;padding:10px;margin-bottom:12px}
+.filters h3{font-size:11px;font-weight:500;color:#5f6368;margin-bottom:6px;text-transform:uppercase}
+.f-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px}
+.f-row:last-child{margin-bottom:0}
+.f-row select{padding:7px;border:1px solid #dadce0;border-radius:4px;font-size:12px;background:#fff}
+
+/* CHARTS */
+.chart-card{background:#fff;border:1px solid #dadce0;border-radius:8px;padding:12px;margin-bottom:12px}
+.chart-card h3{font-size:13px;font-weight:500;color:#202124;margin-bottom:3px}
+.chart-card p{font-size:10px;color:#5f6368;margin-bottom:8px}
+canvas{width:100%;display:block}
+.chart-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:8px}
+.s-box{text-align:center;padding:6px;background:#f8f9fa;border-radius:4px}
+.s-box .n{font-size:14px;font-weight:500;color:#1a73e8}
+.s-box .l{font-size:9px;color:#5f6368;margin-top:2px}
+
+/* DONA */
+.dona-wrap{display:flex;justify-content:center;align-items:center;gap:16px;flex-wrap:wrap}
+.dona-legend{display:flex;flex-direction:column;gap:6px}
+.dona-item{display:flex;align-items:center;gap:7px;font-size:12px}
+.dona-color{width:12px;height:12px;border-radius:2px}
+
+/* PROJECTION TABLE */
+.proj-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:8px}
+.proj-table th{background:#f8f9fa;padding:7px;text-align:left;font-weight:500;color:#5f6368;border-bottom:1px solid #dadce0}
+.proj-table td{padding:7px;border-bottom:1px solid #f1f3f4}
+
+/* RESPONSIVE */
+@media (min-width:768px){
+  .screen{padding:20px;max-width:900px;margin:0 auto}
+  .header{padding:16px 20px}
+  .header img{height:56px}
+  .header-text h1{font-size:20px}
+  .stats-grid{grid-template-columns:repeat(6,1fr)}
+  .f-row{grid-template-columns:repeat(4,1fr)}
+}
+@media (min-width:1024px){
+  .screen{max-width:1100px}
+}
+@media (max-width:480px){
+  .row2,.row3{grid-template-columns:1fr}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .header img{height:40px}
+  .header-text h1{font-size:15px}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <img src="LOGO2.png" alt="Logo" onerror="this.style.display='none'">
+  <div class="header-text">
+    <h1>Registro de Campo</h1>
+    <p>Control reproductivo - Multi-especie</p>
+  </div>
+</div>
+
+<!-- ============ REGISTRO ============ -->
+<div id="scr-reg" class="screen active">
+  <div id="memo_bar" class="memo-bar" style="display:none">
+    <span id="memo_text"></span>
+    <button type="button" onclick="limpiarMemoria()">Limpiar</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Nuevo registro</div>
+    <div class="card-sub">Los campos con ✓ quedan fijos hasta que los cambies</div>
+
+    <div class="tabs">
+      <button type="button" class="tab active" id="tab_diag" onclick="setModo('diag')">Diagnóstico</button>
+      <button type="button" class="tab" id="tab_ia" onclick="setModo('ia')">Inseminación</button>
+    </div>
+
+    <form id="formReg" onsubmit="guardar(event)">
+      <!-- Campos básicos -->
+      <div class="row2">
+        <div class="field">
+          <label class="label">Fecha <span class="req">*</span></label>
+          <input type="date" id="f_fecha" required>
+        </div>
+        <div class="field">
+          <label class="label">Finca <span class="req">*</span><span class="memo" id="m_finca"></span></label>
+          <input type="text" id="f_finca" required>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label class="label">Lote<span class="memo" id="m_lote"></span></label>
+          <input type="text" id="f_lote">
+        </div>
+        <div class="field">
+          <label class="label">N° Animal <span class="req">*</span></label>
+          <input type="text" id="f_animal" required>
+        </div>
+      </div>
+
+      <!-- Campos FIJOS de especie (siempre visibles) -->
+      <div class="card" style="background:#f8f9fa;border:1px dashed #1a73e8;margin:12px 0">
+        <div style="font-size:12px;font-weight:500;color:#1a73e8;margin-bottom:8px">⚙️ Configuración de especie (fija)</div>
+        <div class="row3">
+          <div class="field">
+            <label class="label">Especie<span class="memo" id="m_especie"></span></label>
+            <input type="text" id="f_especie" placeholder="Vaca, Cabra...">
+          </div>
+          <div class="field">
+            <label class="label">Gestación especie (días)<span class="memo" id="m_gestesp"></span></label>
+            <input type="number" id="f_gestesp" min="1" max="700" placeholder="283">
+          </div>
+          <div class="field">
+            <label class="label">Días antes secar<span class="memo" id="m_dsec"></span></label>
+            <input type="number" id="f_dsec" min="1" max="120" value="60">
+          </div>
+        </div>
+      </div>
+
+      <!-- MODO DIAGNÓSTICO -->
+      <div id="modo_diag">
+        <div class="field">
+          <label class="label">Diagnóstico <span class="req">*</span></label>
+          <div class="diag-group">
+            <button type="button" class="diag-btn" data-val="vacia" onclick="setDiag(this)">Vacía</button>
+            <button type="button" class="diag-btn" data-val="prenada" onclick="setDiag(this)">Preñada</button>
+            <button type="button" class="diag-btn" data-val="revision" onclick="setDiag(this)">Rechequeo</button>
+          </div>
+          <input type="hidden" id="f_diag">
+        </div>
+
+        <div id="sec_prenada" style="display:none">
+          <div class="field">
+            <label class="label">Gestación del animal (días o meses) <span class="req">*</span></label>
+            <input type="text" id="f_gest" inputmode="decimal" placeholder="Ej: 3.5 (meses) o 105 (días)" autocomplete="off">
+            <div class="hint" id="hint_gest">≤ 8 → Meses | > 8 → Días</div>
+          </div>
+          <div id="calc_info" class="calc-box" style="display:none"></div>
+        </div>
+
+        <div id="sec_revision" style="display:none">
+          <div class="row2">
+            <div class="field">
+              <label class="label">Fecha próxima revisión</label>
+              <input type="date" id="f_frev">
+            </div>
+            <div class="field">
+              <label class="label">Observación</label>
+              <input type="text" id="f_obsrev" placeholder="Sospechosa...">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODO INSEMINACIÓN -->
+      <div id="modo_ia" style="display:none">
+        <div class="field">
+          <label class="label">Tipo de servicio</label>
+          <select id="f_tserv">
+            <option value="ia">Inseminación Artificial</option>
+            <option value="monta">Monta Natural</option>
+          </select>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label class="label">Semental / Toro</label>
+            <input type="text" id="f_semen">
+          </div>
+          <div class="field">
+            <label class="label">Inseminador</label>
+            <input type="text" id="f_insem_ia">
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label">Observaciones</label>
+        <textarea id="f_notas" rows="2"></textarea>
+      </div>
+
+      <button type="submit" class="btn-save">Guardar</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ DATOS ============ -->
+<div id="scr-datos" class="screen">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px">
+    <h2 style="font-size:15px;font-weight:500">Estadísticas</h2>
+    <span style="background:#e8f0fe;color:#1a73e8;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:500" id="data_count">0 registros</span>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card sc-t"><div class="num" id="st_total">0</div><div class="lbl">Total</div></div>
+    <div class="stat-card sc-p"><div class="num" id="st_prenada">0</div><div class="lbl">Preñadas</div></div>
+    <div class="stat-card sc-v"><div class="num" id="st_vacia">0</div><div class="lbl">Vacías</div></div>
+    <div class="stat-card sc-r"><div class="num" id="st_revision">0</div><div class="lbl">Rechequeos</div></div>
+    <div class="stat-card sc-i"><div class="num" id="st_ia">0</div><div class="lbl">Inseminac.</div></div>
+    <div class="stat-card sc-%"><div class="num" id="st_porcent">0%</div><div class="lbl">% Preñez</div></div>
+  </div>
+
+  <div class="actions">
+    <button class="btn-act pri" onclick="exportarCSV()">Exportar CSV</button>
+    <button class="btn-act" onclick="exportarJSON()">Exportar JSON</button>
+    <button class="btn-act dan" onclick="limpiarHoy()">Borrar hoy</button>
+  </div>
+
+  <div class="table-wrap">
+    <table class="dt" id="tbl_datos">
+      <thead>
+        <tr>
+          <th>Fecha</th><th>Finca</th><th>Lote</th><th>Animal</th><th>Especie</th>
+          <th>Tipo</th><th>Diagnóstico</th><th>Gest.Animal</th><th>Gest.Especie</th>
+          <th>Concepción</th><th>Parto</th><th>Secado</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="tbody_datos"></tbody>
+    </table>
+  </div>
+  <div id="empty_datos" class="empty" style="display:none">Sin registros</div>
+</div>
+
+<!-- ============ GRÁFICAS ============ -->
+<div id="scr-graf" class="screen">
+  <div class="filters">
+    <h3>Filtros</h3>
+    <div class="f-row">
+      <select id="flt_finca" onchange="renderGraficas()"><option value="">Todas las fincas</option></select>
+      <select id="flt_lote" onchange="renderGraficas()"><option value="">Todos los lotes</option></select>
+    </div>
+    <div class="f-row">
+      <select id="flt_especie" onchange="renderGraficas()"><option value="">Todas las especies</option></select>
+      <select id="flt_anio" onchange="renderGraficas()"><option value="">Todos los años</option></select>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <h3>Distribución de Diagnósticos</h3>
+    <p>Proporción de vacías, preñadas y rechequeos</p>
+    <div class="dona-wrap">
+      <canvas id="chart_dona" width="200" height="200" style="max-width:200px"></canvas>
+      <div class="dona-legend" id="dona_legend"></div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <h3>IPC por Mes</h3>
+    <p>Promedio de días de gestación por mes de concepción</p>
+    <canvas id="chart_ipc" height="200"></canvas>
+    <div class="chart-stats" id="stats_ipc"></div>
+  </div>
+
+  <div class="chart-card">
+    <h3>Partos Estimados por Mes</h3>
+    <p>Proyección de partos según fecha probable</p>
+    <canvas id="chart_partos" height="200"></canvas>
+    <div class="chart-stats" id="stats_partos"></div>
+  </div>
+
+  <div class="chart-card">
+    <h3>Secados Programados por Mes</h3>
+    <p>Fecha de inicio de secado</p>
+    <canvas id="chart_secados" height="200"></canvas>
+    <div class="chart-stats" id="stats_secados"></div>
+  </div>
+
+  <div class="chart-card">
+    <h3>Proyección Anual</h3>
+    <p>Resumen por año</p>
+    <table class="proj-table">
+      <thead><tr><th>Año</th><th>Concepciones</th><th>Partos</th><th>Secados</th></tr></thead>
+      <tbody id="tbody_proy"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="bottom-nav">
+  <button class="nav-btn active" onclick="navTo('reg',this)">Registro</button>
+  <button class="nav-btn" onclick="navTo('datos',this)">Datos</button>
+  <button class="nav-btn" onclick="navTo('graf',this)">Gráficas</button>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+// ============ ESTADO ============
+let modo = 'diag';
+let diagSel = '';
+
+// ============ INICIO ============
+function init() {
+  try {
+    document.getElementById('f_fecha').value = new Date().toISOString().split('T')[0];
+    if (!localStorage.getItem('rc')) localStorage.setItem('rc', '[]');
+    cargarMemoria();
+
+    // Listeners
+    document.getElementById('f_gest').addEventListener('input', recalcular);
+    document.getElementById('f_gestesp').addEventListener('input', recalcular);
+    document.getElementById('f_dsec').addEventListener('input', recalcular);
+  } catch (e) {
+    console.error('Error init:', e);
+    alert('Error al iniciar: ' + e.message);
+  }
+}
+
+// ============ NAVEGACIÓN ============
+function navTo(scr, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('scr-' + scr).classList.add('active');
+  btn.classList.add('active');
+  if (scr === 'datos') renderDatos();
+  if (scr === 'graf') { cargarFiltros(); renderGraficas(); }
+}
+
+// ============ MODO ============
+function setModo(m) {
+  modo = m;
+  document.getElementById('tab_diag').classList.toggle('active', m === 'diag');
+  document.getElementById('tab_ia').classList.toggle('active', m === 'ia');
+  document.getElementById('modo_diag').style.display = m === 'diag' ? 'block' : 'none';
+  document.getElementById('modo_ia').style.display = m === 'ia' ? 'block' : 'none';
+}
+
+// ============ DIAGNÓSTICO ============
+function setDiag(btn) {
+  document.querySelectorAll('.diag-btn').forEach(b => b.classList.remove('on-v', 'on-p', 'on-r'));
+  const v = btn.dataset.val;
+  diagSel = v;
+  document.getElementById('f_diag').value = v;
+  if (v === 'vacia') btn.classList.add('on-v');
+  if (v === 'prenada') btn.classList.add('on-p');
+  if (v === 'revision') btn.classList.add('on-r');
+
+  document.getElementById('sec_prenada').style.display = v === 'prenada' ? 'block' : 'none';
+  document.getElementById('sec_revision').style.display = v === 'revision' ? 'block' : 'none';
+  if (v !== 'prenada') document.getElementById('calc_info').style.display = 'none';
+}
+
+// ============ MEMORIA ============
+function guardarMemoria() {
+  const datos = {
+    finca: document.getElementById('f_finca').value.trim(),
+    lote: document.getElementById('f_lote').value.trim(),
+    especie: document.getElementById('f_especie').value.trim(),
+    gestesp: document.getElementById('f_gestesp').value,
+    dsec: document.getElementById('f_dsec').value
+  };
+  localStorage.setItem('rc_fijos', JSON.stringify(datos));
+}
+
+function cargarMemoria() {
+  const datos = JSON.parse(localStorage.getItem('rc_fijos') || 'null');
+  if (!datos) return;
+
+  if (datos.finca) { document.getElementById('f_finca').value = datos.finca; document.getElementById('m_finca').textContent = '✓ fijo'; }
+  if (datos.lote) { document.getElementById('f_lote').value = datos.lote; document.getElementById('m_lote').textContent = '✓ fijo'; }
+  if (datos.especie) { document.getElementById('f_especie').value = datos.especie; document.getElementById('m_especie').textContent = '✓ fijo'; }
+  if (datos.gestesp) { document.getElementById('f_gestesp').value = datos.gestesp; document.getElementById('m_gestesp').textContent = '✓ fijo'; }
+  if (datos.dsec) { document.getElementById('f_dsec').value = datos.dsec; document.getElementById('m_dsec').textContent = '✓ fijo'; }
+
+  const partes = [];
+  if (datos.finca) partes.push(datos.finca);
+  if (datos.especie) partes.push(datos.especie + (datos.gestesp ? ' (' + datos.gestesp + 'd)' : ''));
+  if (partes.length) {
+    document.getElementById('memo_bar').style.display = 'flex';
+    document.getElementById('memo_text').textContent = 'Fijos: ' + partes.join(' | ');
+  }
+}
+
+function limpiarMemoria() {
+  if (!confirm('¿Limpiar los valores fijos?')) return;
+  localStorage.removeItem('rc_fijos');
+  ['f_finca', 'f_lote', 'f_especie', 'f_gestesp'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f_dsec').value = '60';
+  ['m_finca', 'm_lote', 'm_especie', 'm_gestesp', 'm_dsec'].forEach(id => document.getElementById(id).textContent = '');
+  document.getElementById('memo_bar').style.display = 'none';
+  document.getElementById('calc_info').style.display = 'none';
+  document.getElementById('hint_gest').textContent = '≤ 8 → Meses | > 8 → Días';
+  document.getElementById('hint_gest').className = 'hint';
+  toast('Memoria limpiada');
+}
+
+// ============ PARSEO GESTACIÓN ============
+function parsearGestacion(val) {
+  if (!val) return null;
+  const limpio = val.toString().trim().replace(',', '.');
+  const num = parseFloat(limpio);
+  if (isNaN(num) || num <= 0) return null;
+  if (num <= 8) return { dias: Math.round(num * 30), esMeses: true, original: limpio };
+  return { dias: Math.round(num), esMeses: false, original: limpio };
+}
+
+// ============ RECALCULAR ============
+function recalcular() {
+  const val = document.getElementById('f_gest').value.trim();
+  const hint = document.getElementById('hint_gest');
+  const calcBox = document.getElementById('calc_info');
+  const gestesp = parseInt(document.getElementById('f_gestesp').value);
+
+  if (!val) {
+    hint.textContent = '≤ 8 → Meses | > 8 → Días';
+    hint.className = 'hint';
+    calcBox.style.display = 'none';
+    return;
+  }
+
+  const interp = parsearGestacion(val);
+  if (!interp) {
+    hint.textContent = 'Valor inválido';
+    hint.className = 'hint';
+    calcBox.style.display = 'none';
+    return;
+  }
+
+  hint.textContent = interp.esMeses ? '✓ ' + interp.original + ' meses = ' + interp.dias + ' días' : '✓ ' + interp.dias + ' días';
+  hint.className = 'hint ok';
+
+  if (!gestesp || gestesp < 1) {
+    calcBox.innerHTML = '<b style="color:#c5221f">⚠️ Falta: Gestación de la especie (días)</b>';
+    calcBox.style.display = 'block';
+    return;
+  }
+
+  const ds = parseInt(document.getElementById('f_dsec').value) || 60;
+  const hoy = new Date();
+  const fConcep = new Date(hoy); fConcep.setDate(fConcep.getDate() - interp.dias);
+  const fParto = new Date(fConcep); fParto.setDate(fParto.getDate() + gestesp);
+  const fSecado = new Date(fParto); fSecado.setDate(fSecado.getDate() - ds);
+
+  const fmt = d => d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+  const diasParto = Math.floor((fParto - hoy) / 86400000);
+  const especie = document.getElementById('f_especie').value.trim() || 'Especie';
+
+  calcBox.style.display = 'block';
+  calcBox.innerHTML = '<b>' + especie + '</b> — Gestación total: ' + gestesp + ' días<br>' +
+    '<b>Concepción:</b> ' + fmt(fConcep) + '<br>' +
+    '<b>Parto probable:</b> ' + fmt(fParto) + ' (faltan ' + diasParto + ' días)<br>' +
+    '<b>Secado:</b> ' + fmt(fSecado);
+}
+
+// ============ GUARDAR ============
+function guardar(e) {
+  e.preventDefault();
+  try {
+    const reg = {
+      id: Date.now(),
+      tipo: modo,
+      fecha: document.getElementById('f_fecha').value,
+      finca: document.getElementById('f_finca').value.trim(),
+      lote: document.getElementById('f_lote').value.trim(),
+      animal: document.getElementById('f_animal').value.trim(),
+      notas: document.getElementById('f_notas').value.trim(),
+      ts: new Date().toISOString()
+    };
+
+    if (modo === 'diag') {
+      if (!diagSel) { toast('Seleccione un diagnóstico'); return; }
+      reg.diagnostico = diagSel;
+      if (diagSel === 'prenada') {
+        const interp = parsearGestacion(document.getElementById('f_gest').value.trim());
+        if (!interp) { toast('Ingrese gestación válida'); return; }
+        const gestesp = parseInt(document.getElementById('f_gestesp').value);
+        if (!gestesp || gestesp < 1) { toast('Ingrese gestación de la especie'); return; }
+        reg.diasGestacion = interp.dias;
+        reg.gestacionOriginal = interp.original;
+        reg.esMeses = interp.esMeses;
+        reg.gestacionEspecie = gestesp;
+        reg.especieNombre = document.getElementById('f_especie').value.trim() || 'No especificada';
+        reg.diasSecado = parseInt(document.getElementById('f_dsec').value) || 60;
+      } else if (diagSel === 'revision') {
+        reg.fechaRevision = document.getElementById('f_frev').value || null;
+        reg.obsRevision = document.getElementById('f_obsrev').value || null;
+      }
+    } else {
+      reg.tipoServicio = document.getElementById('f_tserv').value;
+      reg.semental = document.getElementById('f_semen').value;
+      reg.inseminador = document.getElementById('f_insem_ia').value;
+    }
+
+    const r = JSON.parse(localStorage.getItem('rc'));
+    r.push(reg);
+    localStorage.setItem('rc', JSON.stringify(r));
+    guardarMemoria();
+    toast('✓ Guardado');
+
+    // Reset solo animal, gestación animal y observaciones
+    document.getElementById('f_animal').value = '';
+    document.getElementById('f_gest').value = '';
+    document.getElementById('f_notas').value = '';
+    document.getElementById('f_frev').value = '';
+    document.getElementById('f_obsrev').value = '';
+    document.getElementById('f_semen').value = '';
+    document.getElementById('f_insem_ia').value = '';
+    document.getElementById('calc_info').style.display = 'none';
+    document.getElementById('hint_gest').textContent = '≤ 8 → Meses | > 8 → Días';
+    document.getElementById('hint_gest').className = 'hint';
+    diagSel = '';
+    document.getElementById('f_diag').value = '';
+    document.querySelectorAll('.diag-btn').forEach(b => b.classList.remove('on-v', 'on-p', 'on-r'));
+    document.getElementById('sec_prenada').style.display = 'none';
+    document.getElementById('sec_revision').style.display = 'none';
+    document.getElementById('f_fecha').value = new Date().toISOString().split('T')[0];
+  } catch (err) {
+    console.error(err);
+    alert('Error al guardar: ' + err.message);
+  }
+}
+
+// ============ TOAST ============
+function toast(m) {
+  const t = document.getElementById('toast');
+  t.textContent = m;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ============ UTILS ============
+function fmtFecha(f) {
+  if (!f) return '-';
+  return new Date(f).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
+}
+
+function procesarReg(r) {
+  if (r.tipo !== 'diag' || r.diagnostico !== 'prenada' || !r.diasGestacion || !r.gestacionEspecie) return r;
+  const ds = parseInt(r.diasSecado) || 60;
+  const fDiag = new Date(r.fecha);
+  const fConcep = new Date(fDiag); fConcep.setDate(fConcep.getDate() - r.diasGestacion);
+  const fParto = new Date(fConcep); fParto.setDate(fParto.getDate() + r.gestacionEspecie);
+  const fSecado = new Date(fParto); fSecado.setDate(fSecado.getDate() - ds);
+  return { ...r, fConcep, fParto, fSecado };
+}
+
+// ============ RENDER DATOS ============
+function renderDatos() {
+  const registros = JSON.parse(localStorage.getItem('rc') || '[]').slice().reverse();
+  document.getElementById('data_count').textContent = registros.length + ' registros';
+
+  let prenada = 0, vacia = 0, revision = 0, ia = 0;
+  registros.forEach(x => {
+    if (x.tipo === 'diag') {
+      if (x.diagnostico === 'prenada') prenada++;
+      else if (x.diagnostico === 'vacia') vacia++;
+      else if (x.diagnostico === 'revision') revision++;
+    } else ia++;
+  });
+  const totalDiag = prenada + vacia + revision;
+  const porcent = totalDiag > 0 ? ((prenada / totalDiag) * 100).toFixed(1) : 0;
+
+  document.getElementById('st_total').textContent = registros.length;
+  document.getElementById('st_prenada').textContent = prenada;
+  document.getElementById('st_vacia').textContent = vacia;
+  document.getElementById('st_revision').textContent = revision;
+  document.getElementById('st_ia').textContent = ia;
+  document.getElementById('st_porcent').textContent = porcent + '%';
+
+  const tbody = document.getElementById('tbody_datos');
+  const empty = document.getElementById('empty_datos');
+  const tbl = document.getElementById('tbl_datos');
+
+  if (!registros.length) {
+    tbody.innerHTML = '';
+    tbl.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+  tbl.style.display = 'table';
+  empty.style.display = 'none';
+
+  let html = '';
+  registros.forEach(x => {
+    const p = procesarReg(x);
+    let tipo = '', diag = '', gest = '', concep = '', parto = '', secado = '', badge = '';
+
+    if (x.tipo === 'diag') {
+      tipo = 'Diagnóstico';
+      if (x.diagnostico === 'prenada') {
+        badge = '<span class="badge bp">PREÑADA</span>';
+        gest = x.gestacionOriginal ? x.gestacionOriginal + (x.esMeses ? ' m' : ' d') : (x.diasGestacion + 'd');
+        concep = p.fConcep ? fmtFecha(p.fConcep) : '-';
+        parto = p.fParto ? fmtFecha(p.fParto) : '-';
+        secado = p.fSecado ? fmtFecha(p.fSecado) : '-';
+      } else if (x.diagnostico === 'vacia') {
+        badge = '<span class="badge bv">VACÍA</span>';
+      } else {
+        badge = '<span class="badge br">RECHEQUEO</span>';
+        if (x.fechaRevision) concep = 'Rev: ' + fmtFecha(x.fechaRevision);
+      }
+    } else {
+      tipo = 'Inseminación';
+      badge = '<span class="badge bi">' + (x.tipoServicio === 'ia' ? 'IA' : 'MONTA') + '</span>';
+      if (x.semental) diag = x.semental;
+    }
+
+    html += '<tr>' +
+      '<td>' + fmtFecha(x.fecha) + '</td>' +
+      '<td>' + x.finca + '</td>' +
+      '<td>' + (x.lote || '-') + '</td>' +
+      '<td><b>' + x.animal + '</b></td>' +
+      '<td>' + (x.especieNombre || '-') + '</td>' +
+      '<td>' + tipo + '</td>' +
+      '<td>' + badge + ' ' + diag + '</td>' +
+      '<td>' + gest + '</td>' +
+      '<td>' + (x.gestacionEspecie || '-') + 'd</td>' +
+      '<td>' + concep + '</td>' +
+      '<td>' + parto + '</td>' +
+      '<td>' + secado + '</td>' +
+      '<td><button class="btn-del" onclick="borrar(' + x.id + ')">✕</button></td>' +
+      '</tr>';
+  });
+  tbody.innerHTML = html;
+}
+
+function borrar(id) {
+  if (!confirm('¿Eliminar este registro?')) return;
+  let r = JSON.parse(localStorage.getItem('rc') || '[]');
+  r = r.filter(x => x.id !== id);
+  localStorage.setItem('rc', JSON.stringify(r));
+  renderDatos();
+  toast('Eliminado');
+}
+
+function limpiarHoy() {
+  if (!confirm('¿Borrar todos los registros de HOY?')) return;
+  const hoy = new Date().toISOString().split('T')[0];
+  let r = JSON.parse(localStorage.getItem('rc') || '[]');
+  r = r.filter(x => x.fecha !== hoy);
+  localStorage.setItem('rc', JSON.stringify(r));
+  renderDatos();
+  toast('Borrado');
+}
+
+// ============ EXPORTAR ============
+function exportarCSV() {
+  const r = JSON.parse(localStorage.getItem('rc') || '[]');
+  if (!r.length) { toast('Sin datos'); return; }
+  const headers = ['Fecha', 'Finca', 'Lote', 'Animal', 'Especie', 'Tipo', 'Diagnostico', 'GestAnimal', 'GestEspecie', 'EsMeses', 'DiasSecado', 'FechaConcepcion', 'FechaParto', 'FechaSecado', 'Notas'];
+  const rows = r.map(x => {
+    const p = procesarReg(x);
+    const fmtD = f => f ? (new Date(f)).toISOString().split('T')[0] : '';
+    return [
+      x.fecha, x.finca, x.lote || '', x.animal, x.especieNombre || '', x.tipo, x.diagnostico || '',
+      x.gestacionOriginal || '', x.gestacionEspecie || '', x.esMeses ? 'SI' : 'NO', x.diasSecado || '',
+      x.tipo === 'diag' && x.diagnostico === 'prenada' && p.fConcep ? fmtD(p.fConcep) : '',
+      x.tipo === 'diag' && x.diagnostico === 'prenada' && p.fParto ? fmtD(p.fParto) : '',
+      x.tipo === 'diag' && x.diagnostico === 'prenada' && p.fSecado ? fmtD(p.fSecado) : '',
+      (x.notas || '').replace(/[\r\n]+/g, ' ')
+    ];
+  });
+  const esc = v => { v = String(v == null ? '' : v); return (v.includes(';') || v.includes('"') || v.includes('\n')) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  const csv = [headers.map(esc).join(';')].concat(rows.map(r => r.map(esc).join(';'))).join('\r\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'campo_' + new Date().toISOString().split('T')[0] + '.csv';
+  a.click();
+  toast('CSV exportado');
+}
+
+function exportarJSON() {
+  const r = JSON.parse(localStorage.getItem('rc') || '[]');
+  if (!r.length) { toast('Sin datos'); return; }
+  const b = new Blob([JSON.stringify({ t: 'campo', fe: new Date().toISOString(), r: r }, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b);
+  a.download = 'campo_' + new Date().toISOString().split('T')[0] + '.json';
+  a.click();
+  toast('JSON exportado');
+}
+
+// ============ FILTROS ============
+function cargarFiltros() {
+  const r = JSON.parse(localStorage.getItem('rc') || '[]');
+  const fincas = [...new Set(r.map(x => x.finca).filter(Boolean))].sort();
+  const lotes = [...new Set(r.map(x => x.lote).filter(Boolean))].sort();
+  const anios = [...new Set(r.map(x => x.fecha ? x.fecha.substring(0, 4) : '').filter(Boolean))].sort();
+  const especies = [...new Set(r.map(x => x.especieNombre).filter(Boolean))].sort();
+
+  const sf = document.getElementById('flt_finca'); sf.innerHTML = '<option value="">Todas las fincas</option>'; fincas.forEach(f => sf.innerHTML += '<option value="' + f + '">' + f + '</option>');
+  const sl = document.getElementById('flt_lote'); sl.innerHTML = '<option value="">Todos los lotes</option>'; lotes.forEach(l => sl.innerHTML += '<option value="' + l + '">' + l + '</option>');
+  const se = document.getElementById('flt_especie'); se.innerHTML = '<option value="">Todas las especies</option>'; especies.forEach(e => se.innerHTML += '<option value="' + e + '">' + e + '</option>');
+  const sa = document.getElementById('flt_anio'); sa.innerHTML = '<option value="">Todos los años</option>'; anios.forEach(a => sa.innerHTML += '<option value="' + a + '">' + a + '</option>');
+}
+
+function getFiltrados() {
+  const r = JSON.parse(localStorage.getItem('rc') || '[]');
+  const ff = document.getElementById('flt_finca').value;
+  const fl = document.getElementById('flt_lote').value;
+  const fe = document.getElementById('flt_especie').value;
+  const fa = document.getElementById('flt_anio').value;
+  return r.filter(x => {
+    if (ff && x.finca !== ff) return false;
+    if (fl && x.lote !== fl) return false;
+    if (fa && x.fecha.substring(0, 4) !== fa) return false;
+    if (fe && x.especieNombre !== fe) return false;
+    return true;
+  });
+}
+
+// ============ GRÁFICAS ============
+function renderGraficas() {
+  const regs = getFiltrados().map(procesarReg);
+  const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+  // DONA
+  let vacia = 0, prenada = 0, revision = 0;
+  regs.forEach(r => {
+    if (r.tipo === 'diag') {
+      if (r.diagnostico === 'vacia') vacia++;
+      else if (r.diagnostico === 'prenada') prenada++;
+      else if (r.diagnostico === 'revision') revision++;
+    }
+  });
+  dibujarDona('chart_dona', [
+    { label: 'Preñadas', value: prenada, color: '#137333' },
+    { label: 'Vacías', value: vacia, color: '#c5221f' },
+    { label: 'Rechequeo', value: revision, color: '#b06000' }
+  ]);
+  const totalDiag = vacia + prenada + revision;
+  let legendHtml = '';
+  [{ l: 'Preñadas', v: prenada, c: '#137333' }, { l: 'Vacías', v: vacia, c: '#c5221f' }, { l: 'Rechequeo', v: revision, c: '#b06000' }].forEach(i => {
+    const pct = totalDiag > 0 ? ((i.v / totalDiag) * 100).toFixed(1) : 0;
+    legendHtml += '<div class="dona-item"><div class="dona-color" style="background:' + i.c + '"></div><span><b>' + i.l + ':</b> ' + i.v + ' (' + pct + '%)</span></div>';
+  });
+  legendHtml += '<div class="dona-item" style="margin-top:6px;padding-top:6px;border-top:1px solid #dadce0"><span><b>Total:</b> ' + totalDiag + ' diagnósticos</span></div>';
+  document.getElementById('dona_legend').innerHTML = legendHtml;
+
+  // Prenadas procesadas
+  const prenadas = regs.filter(r => r.tipo === 'diag' && r.diagnostico === 'prenada' && r.fParto);
+
+  // IPC por mes
+  const ipcMes = {};
+  prenadas.forEach(r => {
+    const key = r.fConcep.getFullYear() + '-' + String(r.fConcep.getMonth() + 1).padStart(2, '0');
+    if (!ipcMes[key]) ipcMes[key] = { sum: 0, count: 0 };
+    ipcMes[key].sum += r.diasGestacion;
+    ipcMes[key].count++;
+  });
+  const ipcKeys = Object.keys(ipcMes).sort();
+  const ipcVals = ipcKeys.map(k => Math.round(ipcMes[k].sum / ipcMes[k].count));
+  const ipcLabels = ipcKeys.map(k => { const [y, m] = k.split('-'); return meses[parseInt(m) - 1] + ' ' + y.slice(2); });
+  dibujarBarras('chart_ipc', ipcLabels, ipcVals, '#1a73e8');
+  const avgIPC = ipcVals.length ? Math.round(ipcVals.reduce((a, b) => a + b, 0) / ipcVals.length) : 0;
+  const maxIPC = ipcVals.length ? Math.max(...ipcVals) : 0;
+  const minIPC = ipcVals.length ? Math.min(...ipcVals) : 0;
+  document.getElementById('stats_ipc').innerHTML =
+    '<div class="s-box"><div class="n">' + avgIPC + 'd</div><div class="l">Promedio</div></div>' +
+    '<div class="s-box"><div class="n">' + maxIPC + 'd</div><div class="l">Máximo</div></div>' +
+    '<div class="s-box"><div class="n">' + minIPC + 'd</div><div class="l">Mínimo</div></div>';
+
+  // Partos por mes
+  const partosMes = {};
+  prenadas.forEach(r => {
+    const key = r.fParto.getFullYear() + '-' + String(r.fParto.getMonth() + 1).padStart(2, '0');
+    partosMes[key] = (partosMes[key] || 0) + 1;
+  });
+  const pKeys = Object.keys(partosMes).sort();
+  const pVals = pKeys.map(k => partosMes[k]);
+  const pLabels = pKeys.map(k => { const [y, m] = k.split('-'); return meses[parseInt(m) - 1] + ' ' + y.slice(2); });
+  dibujarBarras('chart_partos', pLabels, pVals, '#137333');
+  const totalP = pVals.reduce((a, b) => a + b, 0);
+  const maxP = pVals.length ? Math.max(...pVals) : 0;
+  document.getElementById('stats_partos').innerHTML =
+    '<div class="s-box"><div class="n">' + totalP + '</div><div class="l">Total partos</div></div>' +
+    '<div class="s-box"><div class="n">' + maxP + '</div><div class="l">Mes máx.</div></div>' +
+    '<div class="s-box"><div class="n">' + pVals.length + '</div><div class="l">Meses</div></div>';
+
+  // Secados por mes
+  const secMes = {};
+  prenadas.forEach(r => {
+    const key = r.fSecado.getFullYear() + '-' + String(r.fSecado.getMonth() + 1).padStart(2, '0');
+    secMes[key] = (secMes[key] || 0) + 1;
+  });
+  const sKeys = Object.keys(secMes).sort();
+  const sVals = sKeys.map(k => secMes[k]);
+  const sLabels = sKeys.map(k => { const [y, m] = k.split('-'); return meses[parseInt(m) - 1] + ' ' + y.slice(2); });
+  dibujarBarras('chart_secados', sLabels, sVals, '#b06000');
+  const totalS = sVals.reduce((a, b) => a + b, 0);
+  const maxS = sVals.length ? Math.max(...sVals) : 0;
+  document.getElementById('stats_secados').innerHTML =
+    '<div class="s-box"><div class="n">' + totalS + '</div><div class="l">Total secados</div></div>' +
+    '<div class="s-box"><div class="n">' + maxS + '</div><div class="l">Mes máx.</div></div>' +
+    '<div class="s-box"><div class="n">' + sVals.length + '</div><div class="l">Meses</div></div>';
+
+  // Proyección anual
+  const anios = {};
+  prenadas.forEach(r => {
+    const y = r.fConcep.getFullYear(); if (!anios[y]) anios[y] = { concep: 0, partos: 0, secados: 0 };
+    anios[y].concep++;
+    const yp = r.fParto.getFullYear(); if (!anios[yp]) anios[yp] = { concep: 0, partos: 0, secados: 0 };
+    anios[yp].partos++;
+    const ys = r.fSecado.getFullYear(); if (!anios[ys]) anios[ys] = { concep: 0, partos: 0, secados: 0 };
+    anios[ys].secados++;
+  });
+  let html = '';
+  Object.keys(anios).sort().forEach(y => {
+    const a = anios[y];
+    html += '<tr><td><b>' + y + '</b></td><td>' + a.concep + '</td><td>' + a.partos + '</td><td>' + a.secados + '</td></tr>';
+  });
+  document.getElementById('tbody_proy').innerHTML = html || '<tr><td colspan="4" style="text-align:center;color:#5f6368">Sin datos</td></tr>';
+}
+
+// ============ DONA ============
+function dibujarDona(canvasId, data) {
+  const c = document.getElementById(canvasId);
+  const dpr = window.devicePixelRatio || 1;
+  const size = 200;
+  c.width = size * dpr; c.height = size * dpr;
+  c.style.width = size + 'px'; c.style.height = size + 'px';
+  const ctx = c.getContext('2d'); ctx.scale(dpr, dpr); ctx.clearRect(0, 0, size, size);
+
+  const total = data.reduce((s, i) => s + i.value, 0);
+  if (total === 0) {
+    ctx.fillStyle = '#5f6368'; ctx.font = '12px Arial'; ctx.textAlign = 'center';
+    ctx.fillText('Sin datos', size / 2, size / 2);
+    return;
+  }
+
+  const cx = size / 2, cy = size / 2;
+  const radio = size / 2 - 10;
+  const radioInt = radio * 0.55;
+  let inicio = -Math.PI / 2;
+
+  data.forEach(item => {
+    if (item.value === 0) return;
+    const angulo = (item.value / total) * 2 * Math.PI;
+    ctx.beginPath();
+    ctx.moveTo(cx + radioInt * Math.cos(inicio), cy + radioInt * Math.sin(inicio));
+    ctx.arc(cx, cy, radio, inicio, inicio + angulo);
+    ctx.arc(cx, cy, radioInt, inicio + angulo, inicio, true);
+    ctx.closePath();
+    ctx.fillStyle = item.color;
+    ctx.fill();
+    inicio += angulo;
+  });
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, radioInt - 2, 0, 2 * Math.PI);
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+
+  ctx.fillStyle = '#202124';
+  ctx.font = 'bold 22px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(total, cx, cy - 5);
+  ctx.fillStyle = '#5f6368';
+  ctx.font = '10px Arial';
+  ctx.fillText('total', cx, cy + 12);
+}
+
+// ============ BARRAS ============
+function dibujarBarras(canvasId, labels, vals, color) {
+  const c = document.getElementById(canvasId);
+  const dpr = window.devicePixelRatio || 1;
+  const w = c.clientWidth; const h = 200;
+  c.width = w * dpr; c.height = h * dpr; c.style.height = h + 'px';
+  const ctx = c.getContext('2d'); ctx.scale(dpr, dpr); ctx.clearRect(0, 0, w, h);
+  if (!vals.length) { ctx.fillStyle = '#5f6368'; ctx.font = '12px Arial'; ctx.textAlign = 'center'; ctx.fillText('Sin datos', w / 2, h / 2); return; }
+  const padL = 30, padR = 10, padT = 15, padB = 30, chartW = w - padL - padR, chartH = h - padT - padB, max = Math.max(...vals, 1), barW = chartW / vals.length, barPad = barW * 0.2;
+  ctx.strokeStyle = '#dadce0'; ctx.lineWidth = 1; ctx.fillStyle = '#5f6368'; ctx.font = '10px Arial'; ctx.textAlign = 'right';
+  for (let i = 0; i <= 4; i++) { const y = padT + chartH - (chartH * i / 4); ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w - padR, y); ctx.stroke(); ctx.fillText(Math.round(max * i / 4), padL - 4, y + 3); }
+  ctx.fillStyle = color;
+  vals.forEach((v, i) => { const bh = (v / max) * chartH, x = padL + i * barW + barPad, y = padT + chartH - bh; ctx.fillRect(x, y, barW - barPad * 2, bh); ctx.fillStyle = '#202124'; ctx.font = 'bold 10px Arial'; ctx.textAlign = 'center'; ctx.fillText(v, x + (barW - barPad * 2) / 2, y - 3); ctx.fillStyle = color; });
+  ctx.fillStyle = '#5f6368'; ctx.font = '9px Arial'; ctx.textAlign = 'center';
+  const step = Math.max(1, Math.floor(labels.length / 6));
+  labels.forEach((l, i) => { if (i % step === 0) { const x = padL + i * barW + barW / 2; ctx.fillText(l, x, h - padB + 12); } });
+}
+
+// ============ ARRANQUE ============
+init();
+</script>
+</body>
+</html>
